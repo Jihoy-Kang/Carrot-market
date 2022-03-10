@@ -30,7 +30,6 @@ db.collection("product")
     })
   })
 
-
   //db.collection("product").doc('상품3').set({제목 : '변기'}) // set은 id를 지정하여 데이터베이스에 저장
   //db.collection("product").add({제목 : '변기'}) // add는 id를 임의로 지정하여 데이터베이스에 저장.
 
@@ -58,8 +57,10 @@ $('#send').click(function uploadData(){
           content : $('#content').val(),
           date : new Date(), 
           url : url,
+          uid : JSON.parse(localStorage.user).uid,
+          userName : JSON.parse(localStorage.user).displayName,
         }
-      
+
         db.collection("product").add(itemList)
           .then((result)=>{ 
             //성공 후 실행할 코드입력
@@ -79,11 +80,12 @@ $('#register').click(function(){
 
   let email = $('#email-new').val()
   let password =  $('#pw-new').val()
+  let name = $('#name-new').val()
 
   firebase.auth().createUserWithEmailAndPassword(email, password)
   .then((result)=>{
-    console.log(result)
     console.log(result.user)
+    result.user.updateProfile( {displayName : name} )
   })
 })
 
@@ -100,6 +102,7 @@ $('#log_in').click(function(){
   firebase.auth().signInWithEmailAndPassword(email,password)
     .then((result)=>{
       console.log(result.user)
+      localStorage.setItem('user', JSON.stringify(result.user))
     })
 })
 
@@ -110,21 +113,53 @@ $('#log_out').click(function(){
 let queryString = new URLSearchParams(window.location.search)
 
 
+
 db.collection('product').doc(queryString.get('id'))
   .get()
   .then((result)=>{
     
     let detailTemplate = `
-    <div class="detail-pic my-4" style="background-image: url('https://placeimg.com/640/380/tech');"></div>
+    <div class="detail-pic my-4" style="background-image: url('${result.data().url}');"></div>
     <div>
         <h5 id="user">올린사람 : dd</h5>
         <hr>
         <h5 id="user-item" class="title">${result.data().title}</h5>
         <p id="upload-date" class="date">${result.data().date}</p>
         <p id="user-price" class="price">${result.data().price}</p>
-    </div>`
-      $('#item-detail').append(detailTemplate) // html에넣는 jquery
-
-    console.log(result.data())
+    </div>
+    <div>
+    <button id="edit" onclick="itemEdit()">수정</button>
+    </div>
+    `
+    $('#item-detail').append(detailTemplate) // html에넣는 jquery
   })
 
+
+
+function itemEdit(){
+  console.log("흠")
+    window.location.href = '/edit.html?id=' + queryString.get('id')
+    
+}
+
+db.collection('product').doc(queryString.get('id'))
+  .get()
+  .then((result)=>{
+    console.log(result.data())
+    $('#title').val(result.data().title)
+    $('#content').val(result.data().content)
+    $('#price').val(result.data().price)
+  })
+
+function editItem(){
+  db.collection('product').doc(queryString.get('id')).update({
+    title : $('#title').val(),
+    price : Number($('#price').val()),
+    content : $('#content').val(),
+    date : new Date(),
+  })
+    .then(()=>{
+      window.location.href = '/detail.html?id=' + queryString.get('id')
+    })
+
+}
