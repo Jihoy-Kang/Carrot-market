@@ -7,7 +7,6 @@ const firebaseConfig = {
   appId: "1:1074709395330:web:6916ff597401d3d974419b"
 };
 
-
 firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
@@ -15,13 +14,13 @@ const storage = firebase.storage();
 
 db.collection("product")
   .get()
-  .then((result)=>{
+  .then((result)=>{ 
     result.forEach((doc)=>{
       let itemTemplate = `
       <div class="product">
-          <div class="thumbnail"><img src ="${doc.data().url}"></div>
+          <div class="thumbnail" style="background-image: url('${doc.data().url}');"></div>
           <div class="flex-grow-1 p-4">
-              <h5 class="title">${doc.data().title}</h5>
+              <h5 class="title"><a href="/detail.html?id=${doc.id}">${doc.data().title}</a></h5>
               <p class="date">${doc.data().date}</p>
               <p class="price">${doc.data().price}원</p>
               <p class="float-end">♥0</p>
@@ -86,6 +85,46 @@ $('#register').click(function(){
     console.log(result)
     console.log(result.user)
   })
-  .catch()
-
 })
+
+//result.user.updateProfile((
+//  displayName : '이름',
+//)).then(()=>{})  회원정보 업데이트 함수
+
+
+
+$('#log_in').click(function(){
+  let email = $('#email').val()
+  let password =  $('#pw').val()
+
+  firebase.auth().signInWithEmailAndPassword(email,password)
+    .then((result)=>{
+      console.log(result.user)
+    })
+})
+
+$('#log_out').click(function(){
+  firebase.auth().signOut()
+})
+
+let queryString = new URLSearchParams(window.location.search)
+
+
+db.collection('product').doc(queryString.get('id'))
+  .get()
+  .then((result)=>{
+    
+    let detailTemplate = `
+    <div class="detail-pic my-4" style="background-image: url('https://placeimg.com/640/380/tech');"></div>
+    <div>
+        <h5 id="user">올린사람 : dd</h5>
+        <hr>
+        <h5 id="user-item" class="title">${result.data().title}</h5>
+        <p id="upload-date" class="date">${result.data().date}</p>
+        <p id="user-price" class="price">${result.data().price}</p>
+    </div>`
+      $('#item-detail').append(detailTemplate) // html에넣는 jquery
+
+    console.log(result.data())
+  })
+
